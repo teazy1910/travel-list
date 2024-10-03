@@ -1,18 +1,11 @@
 import { useState } from "react";
 
-// const initialItems = [
-//   { id: 1, description: "Passports", quantity: 2, packed: false },
-//   { id: 2, description: "Socks", quantity: 12, packed: true },
-//   { id: 3, description: "Charger", quantity: 12, packed: false },
-//   { id: 4, description: "Macbook", quantity: 12, packed: false },
-// ];
-
 export default function App() {
-  // TODO: Um welches Element handelt es sich? Beantwortet die Frage, welcher Initialwert als State gesetzt werden muss.
+  //  Um welches Element handelt es sich? Beantwortet die Frage, welcher Initialwert als State gesetzt werden muss.
 
-  //! Dieser State muss von der Form in die App verschoben werden, weil wir die relevanten Objekte nicht anzeigen können. Die Anzeige funktioniert nur den "Tree" abwärts. (Siehe React Dev-Tools - Components)
-  //? Man nennt dies auch : Lift Up State
-  //? Man tut dies wenn die Geschwister Komponenten den State benötigen, hebt man den State in die übergeordnete Component, damit die alle drauf zugreifen könenn.
+  // Dieser State muss von der Form in die App verschoben werden, weil wir die relevanten Objekte nicht anzeigen können. Die Anzeige funktioniert nur den "Tree" abwärts. (Siehe React Dev-Tools - Components)
+  //  Man nennt dies auch : Lift Up State
+  //  Man tut dies wenn die Geschwister Komponenten den State benötigen, hebt man den State in die übergeordnete Component, damit die alle drauf zugreifen könenn.
 
   const [items, setItems] = useState([]);
 
@@ -24,12 +17,24 @@ export default function App() {
     setItems((items) => items.filter((item) => item.id !== id));
   }
 
+  function handleToggleItem(id) {
+    setItems((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, packed: !item.packed } : item
+      )
+    );
+  }
+
   return (
     <div className="app">
       <Logo />
       <Form onAddItems={handleAddItems} />
-      <PackingList items={items} onDeleteItem={handleDeleteItem} />
-      <Stats />
+      <PackingList
+        items={items}
+        onDeleteItem={handleDeleteItem}
+        onToggleItem={handleToggleItem}
+      />
+      <Stats items={items} />
     </div>
   );
 }
@@ -79,21 +84,31 @@ function Form({ onAddItems }) {
     </form>
   );
 }
-function PackingList({ items, onDeleteItem }) {
+function PackingList({ items, onDeleteItem, onToggleItem }) {
   return (
     <div className="list">
       <ul>
         {items.map((item) => (
-          <Item item={item} onDeleteItem={onDeleteItem} key={item.id} />
+          <Item
+            item={item}
+            onDeleteItem={onDeleteItem}
+            key={item.id}
+            onToggleItem={onToggleItem}
+          />
         ))}
       </ul>
     </div>
   );
 }
 
-function Item({ item, onDeleteItem }) {
+function Item({ item, onDeleteItem, onToggleItem }) {
   return (
     <li>
+      <input
+        type="checkbox"
+        value={item.packed}
+        onChange={() => onToggleItem(item.id)}
+      />
       <span style={item.packed ? { textDecoration: "line-through" } : {}}>
         {item.select} {item.quantity} {item.description}
       </span>
@@ -107,10 +122,26 @@ function Item({ item, onDeleteItem }) {
   );
 }
 
-function Stats() {
+function Stats({ items }) {
+  if (!items.length)
+    return (
+      <p className="stats">
+        <em>Start adding some items to your packing list 🚀 </em>
+      </p>
+    );
+
+  const numItems = items.length; // Die Länger des Arrays ist eine andere, sobald es geändert wird, also benötigt man keinen State!
+  const numPacked = items.filter((item) => item.packed).length;
+  const percentage = Math.round((numPacked / numItems) * 100);
+
   return (
     <footer className="stats">
-      <em>You have X items on your list, and you already packed X (x%)</em>
+      <em>
+        {percentage === 100
+          ? "🧳 You got everything! Ready to go ✈️"
+          : `You have ${numItems} items on your list, and you already packed
+          ${numPacked} (${percentage}%)`}
+      </em>
     </footer>
   );
 }
